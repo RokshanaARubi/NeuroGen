@@ -1,9 +1,10 @@
 import mysql.connector
 
 def connect_db():
-    return mysql.connector.connect(
+    conn = mysql.connector.connect(
         host="localhost",
         user="root",
-        password=" ",
-        database="neurogen"
+        password="",
+        database="neurogen_db"
     )
+    return conn
