@@ -1,6 +1,7 @@
 from db.db_config import connect_db
 import hashlib
 import os
+import json
 
 def _hash_password(password: str):
     salt = os.urandom(16)
@@ -42,10 +43,14 @@ def authenticate_user(username: str, password: str) -> bool:
     finally:
         conn.close()
 
-def insert_input(snp_input: str, result: str, username: str = None):
+def insert_input(snp_input: str, result, username: str = None):
     conn = connect_db()
     try:
         cur = conn.cursor()
+        # ✅ Convert dictionary result to JSON string if needed
+        if isinstance(result, dict):
+            result = json.dumps(result)
+
         cur.execute(
             "INSERT INTO input_history (username, snp_input, result) VALUES (%s, %s, %s)",
             (username, snp_input, result)
