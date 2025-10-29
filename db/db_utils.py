@@ -70,3 +70,68 @@ def fetch_input_history(limit: int = 20):
         return cur.fetchall()
     finally:
         conn.close()
+def fetch_user_input_history(username: str, limit: int = 20):
+    """Fetch input history for a specific user"""
+    conn = connect_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT username, snp_input, result, timestamp FROM input_history WHERE username = %s ORDER BY timestamp DESC LIMIT %s",
+            (username, limit)
+        )
+        return cur.fetchall()
+    finally:
+        conn.close()
+        
+def save_user_profile(username: str, profile_data: dict) -> bool:
+    """Save user profile data to database"""
+    conn = connect_db()
+    try:
+        cur = conn.cursor()
+        
+        # Convert profile data to JSON string
+        profile_json = json.dumps(profile_data)
+        
+        # Check if profile exists
+        cur.execute("SELECT id FROM user_profiles WHERE username = %s", (username,))
+        existing_profile = cur.fetchone()
+        
+        if existing_profile:
+            # Update existing profile
+            cur.execute(
+                "UPDATE user_profiles SET profile_data = %s, updated_at = CURRENT_TIMESTAMP WHERE username = %s",
+                (profile_json, username)
+            )
+        else:
+            # Insert new profile
+            cur.execute(
+                "INSERT INTO user_profiles (username, profile_data) VALUES (%s, %s)",
+                (username, profile_json)
+            )
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving profile: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+def get_user_profile(username: str) -> dict:
+    """Get user profile data from database"""
+    conn = connect_db()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT profile_data FROM user_profiles WHERE username = %s", (username,))
+        result = cur.fetchone()
+        
+        if result and result[0]:
+            return json.loads(result[0])
+        else:
+            return {}
+    except Exception as e:
+        print(f"Error getting profile: {e}")
+        return {}
+    finally:
+        conn.close()
